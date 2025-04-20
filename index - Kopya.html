@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Güneş Sistemi Animasyonu</title>
+    <style>
+        body { background: #111; }
+        canvas { display: block; margin: 0 auto; background: #222; }
+    </style>
+</head>
+<body>
+<canvas id="canvas" width="800" height="800"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const cx = canvas.width / 2;
+const cy = canvas.height / 2;
+
+// Yörünge yarıçapları (görsel amaçlı, gerçek oranlar değil)
+const rEarth = 120;
+const rJupiter = 350;
+
+// Yörünge süreleri (gün cinsinden)
+const periodEarth = 365.25;
+const periodJupiter = 4332.59;
+
+// Haftalık adım (gün)
+const step = 7;
+
+// Başlangıç zamanı (gün)
+let day = 0;
+
+let lines = [];
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Güneş
+    ctx.beginPath();
+    ctx.arc(cx, cy, 20, 0, 2 * Math.PI);
+    ctx.fillStyle = 'yellow';
+    ctx.fill();
+
+    // Yörüngeler
+    ctx.beginPath();
+    ctx.arc(cx, cy, rEarth, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#aaa';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, rJupiter, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#aaa';
+    ctx.stroke();
+
+    // Dünya'nın pozisyonu
+    const angleEarth = 2 * Math.PI * (day % periodEarth) / periodEarth;
+    const earthX = cx + rEarth * Math.cos(angleEarth);
+    const earthY = cy + rEarth * Math.sin(angleEarth);
+
+    // Jüpiter'in pozisyonu
+    const angleJupiter = 2 * Math.PI * (day % periodJupiter) / periodJupiter;
+    const jupiterX = cx + rJupiter * Math.cos(angleJupiter);
+    const jupiterY = cy + rJupiter * Math.sin(angleJupiter);
+
+    // Dünya
+    ctx.beginPath();
+    ctx.arc(earthX, earthY, 10, 0, 2 * Math.PI);
+    ctx.fillStyle = 'deepskyblue';
+    ctx.fill();
+
+    // Jüpiter
+    ctx.beginPath();
+    ctx.arc(jupiterX, jupiterY, 14, 0, 2 * Math.PI);
+    ctx.fillStyle = 'orange';
+    ctx.fill();
+
+    // Tüm eski çizgileri çiz
+    ctx.strokeStyle = 'rgba(220,220,220,0.1)';
+    ctx.lineWidth = 2;
+    for (const line of lines) {
+        ctx.beginPath();
+        ctx.moveTo(line[0], line[1]);
+        ctx.lineTo(line[2], line[3]);
+        ctx.stroke();
+    }
+
+    // Yeni çizgiyi kaydet
+    lines.push([earthX, earthY, jupiterX, jupiterY]);
+}
+
+function animate() {
+    draw();
+    day += step;
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>

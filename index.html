@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güneş Sistemi Animasyonu</title>
+    <style>
+        body { background: #111; color: #fff; }
+        #container {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            margin: 0 auto;
+        }
+        canvas {
+            position: absolute;
+            left: 0; top: 0;
+            display: block;
+        }
+        #planetSelect {
+            display: block;
+            margin: 20px auto;
+        }
+        .tabs {
+            width: 800px;
+            margin: 30px auto 0 auto;
+            background: #222;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .tab-buttons {
+            display: flex;
+            background: #222;
+        }
+        .tab-buttons button {
+            flex: 1;
+            padding: 12px;
+            background: #222;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-bottom: 2px solid transparent;
+            transition: background 0.2s, border-bottom 0.2s;
+        }
+        .tab-buttons button.active {
+            background: #333;
+            border-bottom: 2px solid #ffd700;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #222;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+<label for="planetSelect" style="display:block;text-align:center;margin-top:20px;color:#fff;">Gezegen Seçiniz:</label>
+<div id="container">
+    <canvas id="linesCanvas" width="800" height="800"></canvas>
+    <canvas id="planetsCanvas" width="800" height="800"></canvas>
+</div>
+<select id="planetSelect"></select>
+
+<!-- Navigation Tabs -->
+<div class="tabs">
+    <div class="tab-buttons">
+        <button class="active" onclick="showTab('dataTab')">Data</button>
+        <button onclick="showTab('propertiesTab')">Properties</button>
+    </div>
+    <div id="dataTab" class="tab-content active">
+        <!-- Grid örneği -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Gezegen</th>
+                    <th>Yarıçap</th>
+                    <th>Dönem (gün)</th>
+                </tr>
+            </thead>
+            <tbody id="planetTableBody">
+                <!-- JS ile doldurulacak -->
+            </tbody>
+        </table>
+    </div>
+    <div id="propertiesTab" class="tab-content">
+        <!-- Özellikler örneği -->
+        <div id="planetProperties">
+            <!-- JS ile doldurulacak -->
+        </div>
+    </div>
+</div>
+
+<script>
+const linesCanvas = document.getElementById('linesCanvas');
+const linesCtx = linesCanvas.getContext('2d');
+const planetsCanvas = document.getElementById('planetsCanvas');
+const ctx = planetsCanvas.getContext('2d');
+const cx = planetsCanvas.width / 2;
+const cy = planetsCanvas.height / 2;
+
+const planets = {
+    mercury: { name: "Merkür", color: "#b5b5b5", radius: 60, period: 87.97, size: 6 },
+    venus:   { name: "Venüs",  color: "#e1c699", radius: 90, period: 224.7, size: 9 },
+    earth:   { name: "Dünya",  color: "deepskyblue", radius: 120, period: 365.25, size: 10 },
+    mars:    { name: "Mars",   color: "#c1440e", radius: 160, period: 687, size: 8 },
+    jupiter: { name: "Jüpiter",color: "orange", radius: 220, period: 4332.59, size: 14 },
+    saturn:  { name: "Satürn", color: "#e5c97b", radius: 280, period: 10759, size: 12 },
+    uranus:  { name: "Uranüs", color: "#7fffd4", radius: 340, period: 30687, size: 11 },
+    neptune: { name: "Neptün", color: "#4166f5", radius: 400, period: 60190, size: 11 }
+};
+
+// Combobox'u dinamik doldur
+const planetSelect = document.getElementById('planetSelect');
+planetSelect.innerHTML = '';
+for (const key in planets) {
+    if (key !== 'earth') {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = planets[key].name;
+        planetSelect.appendChild(option);
+    }
+}
+
+let selectedPlanet = planetSelect.value;
+planetSelect.addEventListener('change', function() {
+    selectedPlanet = this.value;
+    linesCtx.clearRect(0, 0, linesCanvas.width, linesCanvas.height);
+    lines = [];
+    day = 0;
+    updateProperties();
+});
+
+const step = 7;
+let day = 0;
+let lines = [];
+
+function drawLines(earthX, earthY, planetX, planetY) {
+    lines.push([earthX, earthY, planetX, planetY]);
+    linesCtx.strokeStyle = 'rgba(220,220,220,0.4)';
+    linesCtx.lineWidth = 2;
+    linesCtx.beginPath();
+    linesCtx.moveTo(earthX, earthY);
+    linesCtx.lineTo(planetX, planetY);
+    linesCtx.stroke();
+}
+
+function drawPlanets(earthX, earthY, planetX, planetY, earth, planet) {
+    ctx.clearRect(0, 0, planetsCanvas.width, planetsCanvas.height);
+
+    // Güneş
+    ctx.beginPath();
+    ctx.arc(cx, cy, 20, 0, 2 * Math.PI);
+    ctx.fillStyle = 'yellow';
+    ctx.fill();
+
+    // Yörüngeler
+    for (const key in planets) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, planets[key].radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#aaa';
+        ctx.stroke();
+    }
+
+    // Dünya
+    ctx.beginPath();
+    ctx.arc(earthX, earthY, earth.size, 0, 2 * Math.PI);
+    ctx.fillStyle = earth.color;
+    ctx.fill();
+
+    // Seçili gezegen
+    ctx.beginPath();
+    ctx.arc(planetX, planetY, planet.size, 0, 2 * Math.PI);
+    ctx.fillStyle = planet.color;
+    ctx.fill();
+}
+
+function animate() {
+    const earth = planets.earth;
+    const planet = planets[selectedPlanet];
+
+    const angleEarth = 2 * Math.PI * (day % earth.period) / earth.period;
+    const earthX = cx + earth.radius * Math.cos(angleEarth);
+    const earthY = cy + earth.radius * Math.sin(angleEarth);
+
+    const anglePlanet = 2 * Math.PI * (day % planet.period) / planet.period;
+    const planetX = cx + planet.radius * Math.cos(anglePlanet);
+    const planetY = cy + planet.radius * Math.sin(anglePlanet);
+
+    drawPlanets(earthX, earthY, planetX, planetY, earth, planet);
+    drawLines(earthX, earthY, planetX, planetY);
+
+    day += step;
+    requestAnimationFrame(animate);
+}
+
+// Tab fonksiyonu
+function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    const idx = tabId === 'dataTab' ? 0 : 1;
+    document.querySelectorAll('.tab-buttons button')[idx].classList.add('active');
+}
+
+// Grid'i doldur
+function fillPlanetTable() {
+    const tbody = document.getElementById('planetTableBody');
+    tbody.innerHTML = '';
+    for (const key in planets) {
+        const p = planets[key];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${p.name}</td><td>${p.radius}</td><td>${p.period}</td>`;
+        tbody.appendChild(tr);
+    }
+}
+
+// Özellikleri doldur
+function updateProperties() {
+    const props = document.getElementById('planetProperties');
+    const p = planets[selectedPlanet];
+    props.innerHTML = `
+        <b>${p.name}</b><br>
+        Renk: <span style="color:${p.color}">${p.color}</span><br>
+        Yarıçap: ${p.radius}<br>
+        Dönem: ${p.period} gün<br>
+        Boyut: ${p.size}
+    `;
+}
+
+fillPlanetTable();
+updateProperties();
+animate();
+</script>
+</body>
+</html>

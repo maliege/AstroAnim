@@ -1,0 +1,172 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Güneş Sistemi Animasyonu";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>@ViewData["Title"]</title>
+    <style>
+        body { background: #111; }
+        canvas { display: block; margin: 0 auto; background: #222; }
+    </style>
+</head>
+<body>
+<select id="planetSelect" style="display:block;margin:20px auto;"></select>
+<canvas id="canvas" width="800" height="800"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const cx = canvas.width / 2;
+const cy = canvas.height / 2;
+
+// Tüm gezegenler eklendi
+const planets = {
+    mercury: {
+        name: "Merkür",
+        color: "#b5b5b5",
+        radius: 60,
+        period: 87.97,
+        size: 6
+    },
+    venus: {
+        name: "Venüs",
+        color: "#e1c699",
+        radius: 90,
+        period: 224.7,
+        size: 9
+    },
+    earth: {
+        name: "Dünya",
+        color: "deepskyblue",
+        radius: 120,
+        period: 365.25,
+        size: 10
+    },
+    mars: {
+        name: "Mars",
+        color: "#c1440e",
+        radius: 160,
+        period: 687,
+        size: 8
+    },
+    jupiter: {
+        name: "Jüpiter",
+        color: "orange",
+        radius: 220,
+        period: 4332.59,
+        size: 14
+    },
+    saturn: {
+        name: "Satürn",
+        color: "#e5c97b",
+        radius: 280,
+        period: 10759,
+        size: 12
+    },
+    uranus: {
+        name: "Uranüs",
+        color: "#7fffd4",
+        radius: 340,
+        period: 30687,
+        size: 11
+    },
+    neptune: {
+        name: "Neptün",
+        color: "#4166f5",
+        radius: 400,
+        period: 60190,
+        size: 11
+    }
+};
+
+// Combobox'u dinamik doldur
+const planetSelect = document.getElementById('planetSelect');
+planetSelect.innerHTML = '';
+for (const key in planets) {
+    if (key !== 'earth') {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = planets[key].name;
+        planetSelect.appendChild(option);
+    }
+}
+
+let selectedPlanet = planetSelect.value;
+planetSelect.addEventListener('change', function() {
+    selectedPlanet = this.value;
+    lines = [];
+    day = 0;
+});
+
+const step = 7;
+let day = 0;
+let lines = [];
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Güneş
+    ctx.beginPath();
+    ctx.arc(cx, cy, 20, 0, 2 * Math.PI);
+    ctx.fillStyle = 'yellow';
+    ctx.fill();
+
+    // Yörüngeler
+    for (const key in planets) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, planets[key].radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#aaa';
+        ctx.stroke();
+    }
+
+    // Dünya ve seçili gezegenin pozisyonları
+    const earth = planets.earth;
+    const planet = planets[selectedPlanet];
+
+    const angleEarth = 2 * Math.PI * (day % earth.period) / earth.period;
+    const earthX = cx + earth.radius * Math.cos(angleEarth);
+    const earthY = cy + earth.radius * Math.sin(angleEarth);
+
+    const anglePlanet = 2 * Math.PI * (day % planet.period) / planet.period;
+    const planetX = cx + planet.radius * Math.cos(anglePlanet);
+    const planetY = cy + planet.radius * Math.sin(anglePlanet);
+
+    // Dünya
+    ctx.beginPath();
+    ctx.arc(earthX, earthY, earth.size, 0, 2 * Math.PI);
+    ctx.fillStyle = earth.color;
+    ctx.fill();
+
+    // Seçili gezegen
+    ctx.beginPath();
+    ctx.arc(planetX, planetY, planet.size, 0, 2 * Math.PI);
+    ctx.fillStyle = planet.color;
+    ctx.fill();
+
+    // Tüm eski çizgileri çiz
+    ctx.strokeStyle = 'rgba(220,220,220,0.4)';
+    ctx.lineWidth = 2;
+    for (const line of lines) {
+        ctx.beginPath();
+        ctx.moveTo(line[0], line[1]);
+        ctx.lineTo(line[2], line[3]);
+        ctx.stroke();
+    }
+
+    // Yeni çizgiyi kaydet (Dünya'dan seçili gezegene)
+    lines.push([earthX, earthY, planetX, planetY]);
+}
+
+function animate() {
+    draw();
+    day += step;
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
