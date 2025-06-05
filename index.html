@@ -5,7 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Güneş Sistemi Animasyonu</title>
     <style>
-        body { background: #111; color: #fff; }
+        body { background: #111; color: #fff; margin: 0; }
+        #main-wrapper {
+            display: flex;
+            flex-direction: row;
+            width: 100vw;
+            min-height: 100vh;
+        }
+        #left-panel {
+            flex: 1 1 0;
+            min-width: 820px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        #right-panel {
+            flex: 0 0 400px;
+            background: #181818;
+            padding: 32px 24px;
+            box-sizing: border-box;
+            border-left: 2px solid #222;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         #container {
             position: relative;
             width: 800px;
@@ -19,89 +45,91 @@
         }
         #planetSelect {
             display: block;
-            margin: 20px auto;
-        }
-        .tabs {
-            width: 800px;
-            margin: 30px auto 0 auto;
-            background: #222;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .tab-buttons {
-            display: flex;
-            background: #222;
-        }
-        .tab-buttons button {
-            flex: 1;
-            padding: 12px;
+            margin: 20px auto 30px auto;
+            font-size: 18px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #444;
             background: #222;
             color: #fff;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            border-bottom: 2px solid transparent;
-            transition: background 0.2s, border-bottom 0.2s;
         }
-        .tab-buttons button.active {
-            background: #333;
-            border-bottom: 2px solid #ffd700;
+        .astro-info-title {
+            font-size: 1.7em;
+            margin-bottom: 18px;
+            color: #ffd700;
+            letter-spacing: 1px;
+            text-align: center;
         }
-        .tab-content {
-            display: none;
-            padding: 20px;
+        .astro-info-card {
+            background: #23232b;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px #0006;
+            padding: 28px 24px 18px 24px;
+            min-width: 280px;
+            max-width: 340px;
+            margin: 0 auto;
+            color: #fff;
+            font-size: 1.08em;
+            transition: box-shadow 0.2s;
         }
-        .tab-content.active {
+        .astro-info-card b {
+            font-size: 1.25em;
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .astro-info-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .astro-info-label {
+            min-width: 120px;
+            color: #ffd700;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .astro-info-value {
+            color: #fff;
+            font-weight: 400;
+        }
+        .astro-info-loading {
+            color: #888;
+            font-style: italic;
+            text-align: center;
             display: block;
+            margin: 30px 0;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #222;
-        }
-        th, td {
-            border: 1px solid #444;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background: #333;
+        .astro-info-icon {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            vertical-align: middle;
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
-<label for="planetSelect" style="display:block;text-align:center;margin-top:20px;color:#fff;">Gezegen Seçiniz:</label>
-<div id="container">
-    <canvas id="linesCanvas" width="800" height="800"></canvas>
-    <canvas id="planetsCanvas" width="800" height="800"></canvas>
-</div>
-<select id="planetSelect"></select>
-
-<!-- Navigation Tabs -->
-<div class="tabs">
-    <div class="tab-buttons">
-        <button class="active" onclick="showTab('dataTab')">Data</button>
-        <button onclick="showTab('propertiesTab')">Properties</button>
+<div id="main-wrapper">
+    <div id="left-panel">
+        <label for="planetSelect" class="planet-label">Gezegen Seçiniz:</label>
+        <select id="planetSelect"></select>
+        <div id="container">
+            <canvas id="linesCanvas" width="800" height="800"></canvas>
+            <canvas id="planetsCanvas" width="800" height="800"></canvas>
+        </div>
     </div>
-    <div id="dataTab" class="tab-content active">
-        <!-- Grid örneği -->
-        <table>
-            <thead>
-                <tr>
-                    <th>Gezegen</th>
-                    <th>Yarıçap</th>
-                    <th>Dönem (gün)</th>
-                </tr>
-            </thead>
-            <tbody id="planetTableBody">
-                <!-- JS ile doldurulacak -->
-            </tbody>
-        </table>
-    </div>
-    <div id="propertiesTab" class="tab-content">
-        <!-- Özellikler örneği -->
-        <div id="planetProperties">
-            <!-- JS ile doldurulacak -->
+    <div id="right-panel">
+        <div class="astro-info-title" id="astroInfoTitle">Astronomik Bilgiler</div>
+        <div class="astro-info-content">
+            <div class="astro-info-card" id="astroInfoContent">
+                Lütfen bir gezegen seçiniz.
+            </div>
         </div>
     </div>
 </div>
@@ -115,14 +143,14 @@ const cx = planetsCanvas.width / 2;
 const cy = planetsCanvas.height / 2;
 
 const planets = {
-    mercury: { name: "Merkür", color: "#b5b5b5", radius: 60, period: 87.97, size: 6 },
-    venus:   { name: "Venüs",  color: "#e1c699", radius: 90, period: 224.7, size: 9 },
-    earth:   { name: "Dünya",  color: "deepskyblue", radius: 120, period: 365.25, size: 10 },
-    mars:    { name: "Mars",   color: "#c1440e", radius: 160, period: 687, size: 8 },
-    jupiter: { name: "Jüpiter",color: "orange", radius: 220, period: 4332.59, size: 14 },
-    saturn:  { name: "Satürn", color: "#e5c97b", radius: 280, period: 10759, size: 12 },
-    uranus:  { name: "Uranüs", color: "#7fffd4", radius: 340, period: 30687, size: 11 },
-    neptune: { name: "Neptün", color: "#4166f5", radius: 400, period: 60190, size: 11 }
+    mercury: { name: "Merkür", color: "#b5b5b5", radius: 60, period: 87.97, size: 6, nasaId: "mercure" },
+    venus:   { name: "Venüs",  color: "#e1c699", radius: 90, period: 224.7, size: 9, nasaId: "venus" },
+    earth:   { name: "Dünya",  color: "deepskyblue", radius: 120, period: 365.25, size: 10, nasaId: "terre" },
+    mars:    { name: "Mars",   color: "#c1440e", radius: 160, period: 687, size: 8, nasaId: "mars" },
+    jupiter: { name: "Jüpiter",color: "orange", radius: 220, period: 4332.59, size: 14, nasaId: "jupiter" },
+    saturn:  { name: "Satürn", color: "#e5c97b", radius: 280, period: 10759, size: 12, nasaId: "saturne" },
+    uranus:  { name: "Uranüs", color: "#7fffd4", radius: 340, period: 30687, size: 11, nasaId: "uranus" },
+    neptune: { name: "Neptün", color: "#4166f5", radius: 400, period: 60190, size: 11, nasaId: "neptune" }
 };
 
 // Combobox'u dinamik doldur
@@ -137,13 +165,15 @@ for (const key in planets) {
     }
 }
 
-let selectedPlanet = planetSelect.value;
+let selectedPlanet = planetSelect.value || "venus";
+planetSelect.value = selectedPlanet;
+
 planetSelect.addEventListener('change', function() {
     selectedPlanet = this.value;
     linesCtx.clearRect(0, 0, linesCanvas.width, linesCanvas.height);
     lines = [];
     day = 0;
-    updateProperties();
+    fetchPlanetInfo(selectedPlanet);
 });
 
 const step = 7;
@@ -209,42 +239,60 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// Tab fonksiyonu
-function showTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    const idx = tabId === 'dataTab' ? 0 : 1;
-    document.querySelectorAll('.tab-buttons button')[idx].classList.add('active');
-}
-
-// Grid'i doldur
-function fillPlanetTable() {
-    const tbody = document.getElementById('planetTableBody');
-    tbody.innerHTML = '';
-    for (const key in planets) {
-        const p = planets[key];
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${p.name}</td><td>${p.radius}</td><td>${p.period}</td>`;
-        tbody.appendChild(tr);
+// NASA API'den gezegen bilgisi çekme (örnek: https://api.le-systeme-solaire.net/rest/bodies/venus)
+async function fetchPlanetInfo(key) {
+    const planet = planets[key];
+    const infoDiv = document.getElementById('astroInfoContent');
+    infoDiv.innerHTML = `<span class="astro-info-loading">Yükleniyor...</span>`;
+    try {
+        const response = await fetch(`https://api.le-systeme-solaire.net/rest/bodies/${planet.nasaId}`);
+        if (!response.ok) throw new Error("API hatası");
+        const data = await response.json();
+        infoDiv.innerHTML = `
+            <b>
+                <span class="astro-info-icon">🪐</span>
+                ${planet.name}
+            </b>
+            <div class="astro-info-row">
+                <span class="astro-info-label"><span class="astro-info-icon">🌍</span> İngilizce Adı:</span>
+                <span class="astro-info-value">${data.englishName || "-"}</span>
+            </div>
+            <div class="astro-info-row">
+                <span class="astro-info-label"><span class="astro-info-icon">📏</span> Çap:</span>
+                <span class="astro-info-value">${data.meanRadius ? (data.meanRadius * 2).toLocaleString() + " km" : "-"}</span>
+            </div>
+            <div class="astro-info-row">
+                <span class="astro-info-label"><span class="astro-info-icon">⚖️</span> Kütle:</span>
+                <span class="astro-info-value">${data.mass?.massValue ? data.mass.massValue + " x10^" + data.mass.massExponent + " kg" : "-"}</span>
+            </div>
+            <div class="astro-info-row">
+                <span class="astro-info-label"><span class="astro-info-icon">🔄</span> Yörünge Dönemi:</span>
+                <span class="astro-info-value">${data.sideralOrbit ? data.sideralOrbit + " gün" : "-"}</span>
+            </div>
+            <div class="astro-info-row">
+                <span class="astro-info-label"><span class="astro-info-icon">⏳</span> Gün Uzunluğu:</span>
+                <span class="astro-info-value">${data.sideralRotation ? data.sideralRotation + " saat" : "-"}</span>
+            </div>
+            <div class="astro-info-row">
+                <span class="astro-info-label"><span class="astro-info-icon">🧪</span> Yoğunluk:</span>
+                <span class="astro-info-value">${data.density ? data.density + " g/cm³" : "-"}</span>
+            </div>
+            <div class="astro-info-row">
+                <span class="astro-info-label"><span class="astro-info-icon">🪂</span> Yerçekimi:</span>
+                <span class="astro-info-value">${data.gravity ? data.gravity + " m/s²" : "-"}</span>
+            </div>
+            <div class="astro-info-row">
+                <span class="astro-info-label"><span class="astro-info-icon">🔭</span> Keşif:</span>
+                <span class="astro-info-value">${data.discoveryDate || "-"}</span>
+            </div>
+        `;
+    } catch (e) {
+        infoDiv.innerHTML = `<span style="color:#f66">Bilgi alınamadı.</span>`;
     }
 }
 
-// Özellikleri doldur
-function updateProperties() {
-    const props = document.getElementById('planetProperties');
-    const p = planets[selectedPlanet];
-    props.innerHTML = `
-        <b>${p.name}</b><br>
-        Renk: <span style="color:${p.color}">${p.color}</span><br>
-        Yarıçap: ${p.radius}<br>
-        Dönem: ${p.period} gün<br>
-        Boyut: ${p.size}
-    `;
-}
-
-fillPlanetTable();
-updateProperties();
+// Sayfa ilk açıldığında bilgi getir
+fetchPlanetInfo(selectedPlanet);
 animate();
 </script>
 </body>
